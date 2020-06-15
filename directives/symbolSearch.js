@@ -129,7 +129,6 @@ angular.module('app.directives.symbolSearch', [])
                         scope.possibleMatches[index]) {
                             const toReplace = symbolToSearch + scope.possibleMatches[index][scope.propertyToSearch];
                             const tempValueArr = inputElement.value.split('');
-                            console.log(tempValueArr, symbolToReplaceLocation);
                             if (tempValueArr[symbolToReplaceLocation] === symbolToSearch) {
                                 let untilSpace = 0;
                                 for (let i = symbolToReplaceLocation; i < tempValueArr.length; i++) {
@@ -207,12 +206,10 @@ angular.module('app.directives.symbolSearch', [])
                 }
 
                 inputElement.addEventListener('keydown', function(event) {
-                    console.log(event);
                     if ((event.key === 'Enter' || event.key === 'ArrowRight' || event.key === 'Tab') && scope.possibleMatches && 
                     scope.possibleMatches.length &&
                     scope.activeMatchIndex >= 0) {
                         scope.chooseMatch(scope.activeMatchIndex);
-                        return;
                     }
                     if (event.keyCode === arrowUp ||
                         event.keyCode === arrowDown) {
@@ -220,7 +217,6 @@ angular.module('app.directives.symbolSearch', [])
                             return;
                     }
                     if (callbackOnKeys.includes(event.key)) {
-                        console.log('it endssssss');
                         findMatch();
                         symbolTyping = false;
                         if (matching.length > 0) {
@@ -239,7 +235,6 @@ angular.module('app.directives.symbolSearch', [])
                         scope.possibleMatches = findPossibleMatches(builtUpSearch);
                     }
                     if (event.key === symbolToSearch) {
-                        console.log('It beginnnnnss');
                         builtUpSearch = '';
                         symbolToReplaceLocation = inputElement.selectionStart;
                         scope.possibleMatches = toSearch;
