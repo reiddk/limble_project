@@ -1,0 +1,66 @@
+/* app css stylesheet */
+
+.menu {
+  list-style: none;
+  border-bottom: 0.1em solid black;
+  margin-bottom: 2em;
+  padding: 0 0 0.5em;
+}
+
+.menu:before {
+  content: "[";
+}
+
+.menu:after {
+  content: "]";
+}
+
+.menu > li {
+  display: inline;
+}
+
+.menu > li + li:before {
+  content: "|";
+  padding-right: 0.3em;
+}
+.messages-container {
+  -webkit-box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.75);
+-moz-box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.75);
+box-shadow: 0px 0px 3px 0px rgba(0,0,0,0.75);
+padding:15px;
+}
+.comment-wrapper {
+  width: 100%;
+  min-height: 100px;
+  position: relative;
+}
+.comment {
+  background-color: #f1f1f1;
+  border: solid black 1px;
+  border-radius: 5px;
+  margin: 10px 0px;
+  padding: 15px;
+  float: left;
+}
+.comment.my-comment {
+  background-color:#ddddff;
+  float:right;
+}
+.user-comment-info {
+  color: grey;
+  float: left;
+  text-align: left;
+  padding: 15px;
+  font-size:8px;
+}
+.user-comment-info :first-child {
+font-size:10px;
+font-weight:bold;
+}
+.user-comment-info.my-comment {
+  float: right;
+  text-align: right;
+}
+.new-comment-wrapper {
+  margin-top:15px;
+}

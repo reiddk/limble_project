@@ -1,0 +1,27 @@
+<div class="container">
+   <div class="row">
+        <div class="col messages-container">
+           <div ng-repeat="comment in comments" class="row">
+              <div class="comment col-8" ng-class="{'my-comment order-1':comment.userID === myId}">
+               {{comment.comment}}
+              </div>
+              <div class="user-comment-info col-4" ng-class="{'my-comment':comment.userID === myId}" ng-init="d = timestampToDate(comment.timestamp)">
+                 <div>{{getUserNameFromId(comment.userID)}}</div>
+                 <div>{{d.date}}</div>
+                 <div>{{d.time}}</div>
+              </div>
+           </div>
+        </div>
+   </div>
+   <div class="row new-comment-wrapper">
+      <div class="col">
+         <form ng-submit="addComment()">
+            <input class="form-control" type="text" ng-model="currentComment" placeholder="Comment Here:" 
+            symbol-search symbol-search-to-search="users" symbol-search-settings="{symbol:'@', propertyToSearch:'name', callbackOnKeys:['Enter'], caseSensitive: false }" 
+            symbol-search-callback="personFound(event)"/>
+         </form>
+         
+      </div>
+   </div>
+
+</div>

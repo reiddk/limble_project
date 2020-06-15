@@ -1,0 +1,38 @@
+{
+  "name": "limble_project",
+  "version": "1.0.0",
+  "description": "Project for Limble",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reiddk/limble_project.git"
+  },
+  "author": "Reid Kuttler",
+  "license": "ISC",
+  "dependencies": {
+    "angular": "^1.7.5",
+    "angular-loader": "^1.7.5",
+    "angular-route": "^1.7.5",
+    "html5-boilerplate": "0.0.1",
+    "bootstrap": "4.5.0",
+    "moment": "2.26.0"
+  },
+  "devDependencies": {
+    "angular-mocks": "^1.7.5",
+    "cpx": "^1.5.0",
+    "http-server": "^0.11.1",
+    "jasmine-core": "^3.3.0",
+    "karma": "^3.1.1",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-firefox-launcher": "^1.1.0",
+    "karma-jasmine": "^1.1.2",
+    "protractor": "^5.4.1"
+  },
+  "bugs": {
+    "url": "https://github.com/reiddk/limble_project/issues"
+  },
+  "homepage": "https://github.com/reiddk/limble_project#readme"
+}
