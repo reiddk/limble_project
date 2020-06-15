@@ -9,7 +9,7 @@ component('chatComponent', {
   controller: function GreetUserController($scope) {
 
     $scope.myId = 1;
-    $scope.currentComment = '';
+    $scope.currentComment = {value: ''};
 
     $scope.users = [
       {'userID' : 1, 'name' : 'Kevin'},
@@ -43,8 +43,8 @@ component('chatComponent', {
     ].sort((a,b) => a.timestamp - b.timestamp);
 
     $scope.addComment = function() {
-      $scope.comments.push({comment:$scope.currentComment, userID:$scope.myId, timestamp: $scope.getTimestamp()});
-      $scope.currentComment = '';
+      $scope.comments.push({comment:$scope.currentComment.value, userID:$scope.myId, timestamp: $scope.getTimestamp()});
+      $scope.currentComment.value = '';
     } 
 
     $scope.getUserNameFromId = function(userID) {
@@ -54,8 +54,8 @@ component('chatComponent', {
       return (user && user.name)?user.name:'';
     }
 
-    $scope.personFound = function(matching) {
-      console.log(matching);
+    $scope.personFound = function(matching, key) {
+      console.log(matching, key);
     } 
 
   }

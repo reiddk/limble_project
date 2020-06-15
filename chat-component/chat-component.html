@@ -16,9 +16,10 @@
    <div class="row new-comment-wrapper">
       <div class="col">
          <form ng-submit="addComment()">
-            <input class="form-control" type="text" ng-model="currentComment" placeholder="Comment Here:" 
-            symbol-search symbol-search-to-search="users" symbol-search-settings="{symbol:'@', propertyToSearch:'name', callbackOnKeys:['Enter'], caseSensitive: false }" 
-            symbol-search-callback="personFound(event)"/>
+         <symbol-search symbol-search-to-search="users" symbol-search-settings="{symbol:'@', propertyToSearch:'name', callbackOnKeys:[' ', 'Enter'], caseSensitive: false }" 
+            symbol-search-callback="personFound(event, key)">
+            <input class="form-control" type="text" ng-model="currentComment.value" placeholder="Comment Here:" />
+         </symbol-search>
          </form>
          
       </div>

@@ -2,17 +2,38 @@ angular.module('app.directives.symbolSearch', [])
     .directive('symbolSearch', function() {
         return {
             //can only call it as an attribute
-            restrict: 'A',
+            restrict: 'E',
+            transclude: true,
             scope: {
                 settings: '=symbolSearchSettings',
                 callback:'&symbolSearchCallback',
                 toSearch:'=symbolSearchToSearch'
             },
+            template: `<div style="position:relative;">
+            <div ng-transclude></div>
+            <div ng-if="possibleMatches.length > 0" ng-style="{bottom:inputElementHeight}" style="position: absolute;
+            width: 500px;
+            max-height: 65px;
+            overflow-y: scroll;
+            z-index: 100;
+            background-color: white;
+            border-radius: 5px;
+            padding: 10px;
+            -webkit-box-shadow: 0px 0px 5px 1px rgba(0,0,0,0.75);
+            -moz-box-shadow: 0px 0px 5px 1px rgba(0,0,0,0.75);
+            box-shadow: 0px 0px 5px 1px rgba(0,0,0,0.75);">
+                <div ng-repeat="user in possibleMatches">{{user.name}}</div>
+            </div>
+            
+            <div>`,
             link: function (scope, element, attr) {
+                const inputElement = element[0].getElementsByTagName('input')[0];
+                scope.inputElementHeight = inputElement.clientHeight + 'px';
                 let symbolTyping = false;
                 let matching = [];
-                let possibleMatches = [];
+                scope.possibleMatches = [];
                 let builtUpSearch = '';
+                const symbolSearchID = 'symbol-search-suggestion-wrapper';
 
                 //This is the symbol that will trigger the search
                 //The default value is '@'
@@ -23,7 +44,7 @@ angular.module('app.directives.symbolSearch', [])
                 const callbackOnKeys = (scope.settings && scope.settings.callbackOnKeys && scope.settings.callbackOnKeys.length)?scope.settings.callbackOnKeys:[' '];
                 
                 //If you pass an array of objects, this is the property that will be searched on each object
-                //The default value is null, if it is set to null then I will assume that you passed an array of strings and not objects.
+                //The default value is null, if it is set to null then it will assume that you passed an array of strings and not objects.
                 const propertyToSearch = (scope.settings && scope.settings.propertyToSearch)?scope.settings.propertyToSearch:null;
 
                 //this will determine if the search value is case sensitive
@@ -32,59 +53,69 @@ angular.module('app.directives.symbolSearch', [])
                 //This is the array that will be searched
                 const toSearch = scope.toSearch;
 
-                console.log(callbackOnKeys);
-                console.log(scope.settings);
-                console.log(element);
+                function getSearchValue(s) {
+                    let valToSearch = '';
+                    if (propertyToSearch) {
+                        valToSearch = s[propertyToSearch];
+                    } else {
+                        valToSearch = s;
+                    }
+                    return valToSearch;
+                }
 
                 function findMatch() {
                     matching = toSearch.filter(s => {
-                        let valToSearch = '';
                         let tempBuiltUpSearch = builtUpSearch;
-                        if (propertyToSearch) {
-                            valToSearch = s[propertyToSearch];
-                        } else {
-                            valToSearch = s;
-                        }
+                        const valToSearch = getSearchValue(s);
                         let regex = new RegExp(symbolToSearch + valToSearch + ' ', (!caseSensitive)?'gi':'g');
-                        return (element[0].value + ' ').match(regex);
+                        return (inputElement.value + ' ').match(regex);
                     });
-                    console.log(matching);
+                }
 
+                function findPossibleMatches(builtUpSearch) {
+                    return toSearch.filter(s => {
+                        let tempBuiltUpSearch = builtUpSearch;
+                        const valToSearch = getSearchValue(s);
+                        let regex = new RegExp(symbolToSearch + builtUpSearch, (!caseSensitive)?'gi':'g');
+                        return (symbolToSearch+valToSearch).match(regex);
+                    });
+                }
+
+                function correctCapitalization() {
+                    matching.forEach(match => {
+                        const valToSearch = getSearchValue(match);
+                        let regex = new RegExp(symbolToSearch + valToSearch,'gi');
+                        inputElement.value = inputElement.value.replace(regex, (matchWithSymbol) => {
+                            return matchWithSymbol.replace(new RegExp(valToSearch,'gi'), valToSearch)
+                        });
+                    });
                 }
 
 
-                element[0].addEventListener('keypress', function(event) {
+                inputElement.addEventListener('keypress', function(event) {
                     if (callbackOnKeys.includes(event.key)) {
                         console.log('it endssssss');
                         findMatch();
                         symbolTyping = false;
                         if (matching.length > 0) {
-                            console.log(matching);
-                            scope.callback({event:matching});
+                            scope.callback({event:matching, key:event.key});
+                            if (!caseSensitive) {
+                                correctCapitalization();
+                            }
+                            scope.possibleMatches = [];
                         }
                     }
                     if (symbolTyping) {
-                        builtUpSearch += event.key;
-                       /* possibleMatches = toSearch.filter(s => {
-                            let valToSearch = '';
-                            let tempBuiltUpSearch = builtUpSearch;
-                            if (propertyToSearch) {
-                                valToSearch = s[propertyToSearch];
-                            } else {
-                                valToSearch = s;
-                            }
-                            if (!caseSensitive) {
-                                valToSearch = valToSearch.toUpperCase();
-                                tempBuiltUpSearch = tempBuiltUpSearch.toUpperCase();
-                            }
-                            return valToSearch.includes(tempBuiltUpSearch);
-                        });*/
+                        builtUpSearch = inputElement.value.split(symbolToSearch).splice(-1) + event.key;
+                        scope.possibleMatches = findPossibleMatches(builtUpSearch);
                     }
                     if (event.key === symbolToSearch) {
                         console.log('It beginnnnnss');
                         builtUpSearch = '';
+                        scope.possibleMatches = toSearch;
                         symbolTyping = true;
                     }
+                    console.log(scope.possibleMatches);
                     
                 })
             }
