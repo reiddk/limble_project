@@ -1,7 +1,7 @@
 angular.module('app.directives.symbolSearch', [])
     .directive('symbolSearch', function() {
         return {
-            //can only call it as an attribute
+            //can only call it as an element
             restrict: 'E',
             transclude: true,
             scope: {
