@@ -55,7 +55,7 @@ component('chatComponent', {
     }
 
     $scope.personFound = function(matching, key) {
-      console.log(matching, key);
+      alert(matching.map(m => m.name).join(','));
     } 
 
   }
