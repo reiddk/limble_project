@@ -3,14 +3,21 @@ angular.module('app.directives.symbolSearch', [])
         return {
             //can only call it as an element
             restrict: 'E',
-            transclude: true,
+            require: '?ngModel',
             scope: {
                 settings: '=symbolSearchSettings',
                 callback:'&symbolSearchCallback',
-                toSearch:'=symbolSearchToSearch'
+                toSearch:'=symbolSearchToSearch',
+                enterCallback: '&symbolSearchEnterCallback'
             },
             template: `
             <style>
+            [contenteditable][placeholder]:empty:before {
+                content: attr(placeholder);
+                position: absolute;
+                color: gray;
+                background-color: transparent;
+              }
                 .matches-wrapper {
                     position: absolute;
                     max-width: 250px;
@@ -39,14 +46,21 @@ angular.module('app.directives.symbolSearch', [])
                 }
             </style>
             <div style="position:relative;">
-            <div ng-transclude></div>
+            <div style="display:inline-block;overflow:hidden;" contenteditable placeholder="{{placeHolder}}" class="symbol-search-content-editable {{classes}}" ng-model="theval"></div>
+            <input style="display:none;" ng-model="theval" />
             <div ng-if="possibleMatches.length > 0" ng-style="{bottom:inputElementHeight, left:inputElementCursor}" class="matches-wrapper">
                 <div class="possible-matches" ng-click="chooseMatch($index)" ng-repeat="user in possibleMatches">{{user[propertyToSearch]}}</div>
             </div>
             
             <div>`,
-            link: function (scope, element, attr) {
-                const inputElement = element[0].getElementsByTagName('input')[0];
+            link: function (scope, element, attr, ngModel) {
+                if (!ngModel) {
+                    return;
+                }
+                console.log(ngModel);
+              //  const inputElement = element[0].getElementsByTagName('input')[0];
+                const inputElement = element[0].getElementsByClassName('symbol-search-content-editable')[0];
+                console.log(inputElement);
                 scope.inputElementHeight = inputElement.clientHeight + 'px';
                 scope.inputElementCursor = '0px';
                 scope.activeMatchIndex = 0;
@@ -56,6 +70,7 @@ angular.module('app.directives.symbolSearch', [])
                 let symbolToReplaceLocation = 0;
                 let lastSpaceTriggerMatchingLength = 0;
                 let builtUpSearch = '';
+                let previousDown = '';
                 const arrowUp = 38;
                 const arrowDown = 40;
                 const symbolSearchID = 'symbol-search-suggestion-wrapper';
@@ -75,8 +90,34 @@ angular.module('app.directives.symbolSearch', [])
                 //this will determine if the search value is case sensitive
                 const caseSensitive = (scope.settings && scope.settings.caseSensitive);
 
+                //placeholder
+                scope.placeHolder = (scope.settings && scope.settings.placeholder)?scope.settings.placeholder:'';
+
+                //classes to style the editable div
+                scope.classes = (scope.settings && scope.settings.classes)?scope.settings.classes:''
+                
                 //This is the array that will be searched
                 const toSearch = scope.toSearch;
+
+
+                function placeCaretAtEnd(el) {
+                    el.focus();
+                    if (typeof window.getSelection != "undefined"
+                            && typeof document.createRange != "undefined") {
+                        var range = document.createRange();
+                        range.selectNodeContents(el);
+                        range.collapse(false);
+                        var sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    } else if (typeof document.body.createTextRange != "undefined") {
+                        var textRange = document.body.createTextRange();
+                        textRange.moveToElementText(el);
+                        textRange.collapse(false);
+                        textRange.select();
+                    }
+                }
+                
 
                 function getSearchValue(s) {
                     let valToSearch = '';
@@ -92,8 +133,8 @@ angular.module('app.directives.symbolSearch', [])
                     matching = toSearch.filter(s => {
                         let tempBuiltUpSearch = builtUpSearch;
                         const valToSearch = getSearchValue(s);
-                        let regex = new RegExp(symbolToSearch + valToSearch + ' ', (!caseSensitive)?'gi':'g');
-                        return (inputElement.value + ' ').match(regex);
+                        let regex = new RegExp(symbolToSearch + valToSearch + '\\s', (!caseSensitive)?'gi':'g');
+                        return (inputElement.textContent + ' ').match(regex);
                     });
                 }
 
@@ -128,7 +169,7 @@ angular.module('app.directives.symbolSearch', [])
                     if (scope.possibleMatches && 
                         scope.possibleMatches[index]) {
                             const toReplace = symbolToSearch + scope.possibleMatches[index][scope.propertyToSearch];
-                            const tempValueArr = inputElement.value.split('');
+                            const tempValueArr = inputElement.textContent.split('');
                             if (tempValueArr[symbolToReplaceLocation] === symbolToSearch) {
                                 let untilSpace = 0;
                                 for (let i = symbolToReplaceLocation; i < tempValueArr.length; i++) {
@@ -138,12 +179,12 @@ angular.module('app.directives.symbolSearch', [])
                                     untilSpace++;
                                 }
                                 tempValueArr.splice(symbolToReplaceLocation, untilSpace, toReplace);
-                                inputElement.value = tempValueArr.join('');
-                                clearPossibleMatches();
-                                inputElement.focus();
-                                inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+                                inputElement.textContent = tempValueArr.join('');
                             }
                     }
+                    clearPossibleMatches();
+                    inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+                    placeCaretAtEnd(inputElement);
                 }
 
                 function highlightWArrowKey(event) {
@@ -180,9 +221,24 @@ angular.module('app.directives.symbolSearch', [])
                     matching.forEach(match => {
                         const valToSearch = getSearchValue(match);
                         let regex = new RegExp(symbolToSearch + valToSearch,'gi');
-                        inputElement.value = inputElement.value.replace(regex, (matchWithSymbol) => {
+                        inputElement.textContent = inputElement.textContent.replace(regex, (matchWithSymbol) => {
                             return matchWithSymbol.replace(new RegExp(valToSearch,'gi'), valToSearch)
                         });
+                    });
+                }
+
+                function boldKeyWords() {
+                    let regexBuilder = "";
+                    matching.forEach(match => {
+                        const valToSearch = getSearchValue(match);
+                        regexBuilder += `(${symbolToSearch + valToSearch})|`;
+                    });
+                    if (regexBuilder) {
+                        regexBuilder = regexBuilder.substring(0, regexBuilder.length-1);
+                    }
+                    let regex = new RegExp(regexBuilder,(!caseSensitive)?'gi':'g');
+                    inputElement.innerHTML = inputElement.textContent.replace(regex, function(match) {
+                        return `<b>${match}</b>`;
                     });
                 }
 
@@ -196,7 +252,7 @@ angular.module('app.directives.symbolSearch', [])
                     text.style.width = 'auto'; 
                     text.style.position = 'absolute'; 
                     text.style.whiteSpace = 'no-wrap'; 
-                    text.innerHTML = inputElement.value; 
+                    text.innerHTML = inputElement.textContent; 
                     let width = Math.ceil(text.clientWidth);
                     text.parentNode.removeChild(text);
                     if (width > (inputElement.clientWidth - 250)) {
@@ -205,7 +261,7 @@ angular.module('app.directives.symbolSearch', [])
                     scope.inputElementCursor = width + 'px';
                 }
 
-                inputElement.addEventListener('keydown', function(event) {
+                function handleKeyDown(event) {
                     if ((event.key === 'Enter' || event.key === 'ArrowRight' || event.key === 'Tab') && scope.possibleMatches && 
                     scope.possibleMatches.length &&
                     scope.activeMatchIndex >= 0) {
@@ -216,6 +272,7 @@ angular.module('app.directives.symbolSearch', [])
                             highlightWArrowKey(event);
                             return;
                     }
+
                     if (callbackOnKeys.includes(event.key)) {
                         findMatch();
                         symbolTyping = false;
@@ -227,21 +284,45 @@ angular.module('app.directives.symbolSearch', [])
                             if (!caseSensitive) {
                                 correctCapitalization();
                             }
+                            boldKeyWords();
                             scope.possibleMatches = [];
+                            placeCaretAtEnd(inputElement);
                         }
                     }
                     if (symbolTyping) {
-                        builtUpSearch = inputElement.value.split(symbolToSearch).splice(-1) + event.key;
+                        builtUpSearch = inputElement.textContent.split(symbolToSearch).splice(-1) + event.key;
                         scope.possibleMatches = findPossibleMatches(builtUpSearch);
                     }
                     if (event.key === symbolToSearch) {
                         builtUpSearch = '';
-                        symbolToReplaceLocation = inputElement.selectionStart;
+                        //get carat location 
+                        let _range = document.getSelection().getRangeAt(0);
+                        let range = _range.cloneRange();
+                        range.selectNodeContents(inputElement);
+                        range.setEnd(_range.endContainer, _range.endOffset);
+                        symbolToReplaceLocation = range.toString().length;
+                        
                         scope.possibleMatches = toSearch;
                         setLeftDisplacement();
                         symbolTyping = true;
                     }
-                    
+
+                    scope.safeApply(scope.possibleMatches);
+                    if(event.which === 13 && scope.enterCallback) {
+                        scope.safeApply(scope.enterCallback);
+                        event.preventDefault();
+                        inputElement.innerHTML = "";
+                        clearPossibleMatches();
+                    }
+                }
+
+                inputElement.addEventListener('keyup', function(event) {
+                    ngModel.$setViewValue(inputElement.innerHTML);
+                });
+
+
+                inputElement.addEventListener('keydown', function(event) {
+                    handleKeyDown(event);
                 });
             }
         };
